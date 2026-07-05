@@ -8,7 +8,10 @@ description: >
   "deep work mode") OR when the task objectively spans multiple
   files, multiple sources, or multiple sessions. Do NOT trigger on ordinary
   multi-step requests that a direct attempt handles fine. For a run pinned to a
-  specific model, use fable-sonnet or fable-haiku instead.
+  specific model, use fable-sonnet or fable-haiku instead. Operational
+  guardrails (verify-before-flag, warning batching, sed safety) live in the
+  companion execution-guardrails skill and apply on every model regardless of
+  whether this loop runs.
 ---
 
 # Fable Mode
@@ -31,6 +34,27 @@ skip this loop. Staging a trivial task wastes effort and buries the answer under
 ceremony. This loop earns its cost only when a one-shot attempt would plausibly miss
 something.
 
+## Calibrate to the model running it
+
+The loop's value inverts with model strength. Apply it at the right intensity:
+
+- **Frontier-tier models (Fable/Mythos class, latest Opus).** These plan, verify, and
+  self-correct natively. Do NOT narrate the loop or write a formal stage map for tasks
+  the model would handle cleanly anyway — that is ceremony. Apply only: (a) the failable-
+  check standard from step 3 when producing artifacts, and (b) everything in the
+  execution-guardrails skill. Write a full stage map only for genuinely multi-session or
+  many-file work.
+- **Sonnet-tier.** Run the full loop. Sonnet plans decently but reliably skips step 3 —
+  the check that can fail — and substitutes "looks right" review. Enforce step 3 hardest.
+- **Haiku-tier.** Run the full loop with tightened checks: every stage gets a failable
+  check, no stage may be marked unverified without naming what check was impossible and
+  why. Haiku under time pressure skips verification entirely; the loop exists to prevent
+  exactly that. Accept that the ceiling is unchanged — Haiku with a checklist is still
+  Haiku. Escalate to a stronger model rather than looping when the task needs synthesis
+  the checks can't substitute for.
+
+If the model cannot tell which tier it is, assume Sonnet-tier and run the full loop.
+
 ## Core Loop
 
 The loop is constant across domains. Only the verification artifact in step 3 changes by
@@ -44,6 +68,12 @@ planned. The map is a living document, not a contract.
 
 Each stage should produce one verifiable artifact. If a stage produces nothing checkable,
 merge it with the next.
+
+**Replan budget.** A living document is not an excuse to churn. Allow at most two full
+replans per run. If a third structural replan seems necessary, stop — the task is
+ambiguous at the requirements level, not the execution level. Surface the ambiguity to
+the user and get a decision before burning more stages. Renumbering or splitting a single
+stage does not count as a replan; reordering or rewriting the map does.
 
 Example format:
 ```
@@ -93,58 +123,74 @@ turns up nothing, say so plainly — do not manufacture a weakness to satisfy th
 Step 3 is the check that can fail. Step 4 is the judgment call about what remains weak
 after the check passes.
 
-Before flagging any problem — verify it actually exists. Grep, diff, run it, or check
-the source directly. Never report a problem that hasn't been confirmed present. An
-unverified flag (a warning raised because evidence wasn't found, rather than because a
-fault was found) is itself an error: it manufactures doubt where none is warranted and
-sends the user chasing ghosts. Absence of evidence is not the finding. Confirm, then flag.
+Verify-before-flag and warning batching rules for this step live in the
+execution-guardrails skill and are mandatory.
 
 ---
 
 ## Domain-specific patterns
 
 Each domain below is an instance of step 3: it names the failable check that fits the
-work.
+work. The check must name the exact command, file, or comparison — "verified" without a
+named artifact is a step-3 violation.
 
 ### Software engineering
-- Read the entire relevant codebase section before writing a line
-- Write tests before (or alongside) implementation, not after
-- For large changes: plan the diff, then execute it
-- Failable check: tests run; error paths exercised, not just the happy path
+- Read the entire relevant codebase section before writing a line. Failable check:
+  list the files actually opened; any file the diff touches that isn't on the list is a
+  gap.
+- Write tests before (or alongside) implementation, not after.
+- For large changes: plan the diff, then execute it.
+- Failable check: named test command runs and passes; at least one error path exercised
+  and its output shown, not just the happy path. A test suite that was never run does
+  not count as passing.
 
 ### Research / knowledge work
-- Gather sources before synthesizing. Do not write as you search
+- Gather sources before synthesizing. Do not write as you search.
 - For each claim that matters: what's the evidence? what would falsify it?
-- Distinguish confirmed facts from inferences; flag the latter explicitly
-- Failable check: every load-bearing claim traces to a source actually read
+- Distinguish confirmed facts from inferences; flag the latter explicitly.
+- Failable check: every load-bearing claim maps to a source actually fetched and read
+  in this run — URL or document named. A claim resting on training memory alone must be
+  labeled as such. Absence of a web result is never itself a finding (see
+  execution-guardrails and source-of-truth).
 
 ### Data analysis
-- Understand the data shape before writing any analysis
-- State your hypothesis before computing, not after seeing the numbers
-- Check for obvious data quality issues (nulls, duplicates, outliers) first
-- Failable check: data quality assertions run against the actual data and pass
+- Understand the data shape before writing any analysis: row count, column list, and
+  a sample printed, not assumed.
+- State your hypothesis before computing, not after seeing the numbers.
+- Failable check: quality assertions (null counts, duplicate keys, out-of-range values,
+  total row count vs. source) run against the actual data with output shown. Any
+  aggregate in the deliverable reconciles to a spot-checked raw slice — pick one
+  subtotal and recompute it independently.
+
+### Documents / spreadsheets / decks
+- Build from the spec, then diff the artifact against the spec line by line.
+- Failable check: open the produced file and read it back — every required section,
+  number, and label confirmed present. For spreadsheets: subtotals recomputed from raw
+  rows match the report; formats (currency, headers) spot-checked on the rendered file,
+  not the generating code.
 
 ### Long-running / multi-session tasks
-- Maintain a work log: decisions made, why, what was tried and failed
-- At the start of any continuation, re-read the work log before doing anything
-- Define done criteria upfront so you know when to stop
-- Failable check: done criteria are written and testable, not vibes
+- Maintain a work log: decisions made, why, what was tried and failed.
+- At the start of any continuation, re-read the work log before doing anything.
+- Define done criteria upfront so you know when to stop.
+- Failable check: done criteria are written and testable, not vibes; each continuation
+  begins with a line confirming the log was re-read and naming any decision it changed.
 
 ---
 
 ## Operational rules
 
-**Warning threshold.** Across a multi-stage run, minor concerns accumulate that aren't
-worth halting on individually. Keep a running count. At three accumulated warnings, stop
-and surface all of them to the user at once before continuing. Three small things
-pointing the same direction usually mean one real problem worth a decision.
+The always-on rules — verify-before-flag, the warning threshold, and find-and-replace
+safety — now live in the companion **execution-guardrails** skill so they apply on every
+model and every task, not only inside this loop. Follow them there. If that skill is
+missing from the runtime, its three rules are restated in compressed form:
 
-**Find-and-replace safety.** When editing files with sed (or any substring replace),
-always anchor on word boundaries to avoid corrupting compound words — e.g. replacing a
-bare `edge` will also mangle `Ledger` into garbage. Use `\bword\b`, not bare `word`.
-After any sed pass on a file, grep for glued or malformed compound words before
-presenting the result. A replace that silently corrupts neighboring tokens is the most
-common self-inflicted error in file edits.
+1. Never flag a problem that hasn't been confirmed present by a direct check. Absence of
+   evidence is not the finding.
+2. Batch minor concerns; at the threshold (default three, user-tunable), stop and surface
+   all at once.
+3. Anchor sed/substring replaces on word boundaries (`\bword\b`); grep for corrupted
+   compounds after every pass.
 
 ---
 
@@ -156,4 +202,5 @@ through a problem: the approach, the discipline, the verification habits. It doe
 change raw capability.
 
 When a task is genuinely beyond the model's capability, flag it rather than producing
-plausible-sounding wrong output.
+plausible-sounding wrong output. That flag must itself follow verify-before-flag: name
+what was attempted and where it failed, not a vague appeal to difficulty.
