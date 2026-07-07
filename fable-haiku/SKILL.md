@@ -8,8 +8,8 @@ description: >
   for thorough/systematic/"deep work" handling AND wants it run cheaply or fast
   ("fable on haiku", "deep work mode but cheap", "stage this on haiku"). Use for
   high-volume or cost-sensitive work where structure matters more than peak
-  reasoning. Do NOT use for tasks needing top-tier synthesis — use fable-mode
-  on the frontier tier instead.
+  reasoning. Do NOT use for tasks needing top-tier synthesis — use fable-opus
+  instead.
 ---
 
 # Fable Mode — Haiku
@@ -37,6 +37,9 @@ do it directly. Staging a trivial task buries the answer under ceremony.
    The subagent does not inherit this session's skills, so the operational rules below
    are inlined in full — pass them verbatim, do not summarize them into a reference.
 4. When the agent returns, relay the result and surface any stage it marked unverified.
+5. For high-stakes deliverables, spawn a fresh verifier agent briefed only with the spec
+   and the artifact — not the worker's reasoning — and have it re-run the named checks
+   cold. A second Haiku is cheap; fresh eyes cannot inherit the worker's blind spots.
 
 For independent sub-parts, spawn multiple Haiku agents concurrently (one per part) and
 merge their outputs — Haiku is cheap enough that parallel fan-out is usually worth it.
@@ -77,8 +80,8 @@ Read the final output as a skeptical reviewer. Hunt for a real weakness or limit
 one exists, fix it or flag it. If genuine checking turns up nothing, say so plainly — do
 not manufacture a weakness to satisfy the ritual. When a task needs synthesis the checks
 can't substitute for, stop and escalate rather than looping: flag it, name what was
-attempted and where it failed, and recommend fable-sonnet or fable-mode on the frontier
-tier. Do not produce plausible-sounding wrong output to finish the run.
+attempted and where it failed, and recommend fable-sonnet or fable-opus. Do not produce
+plausible-sounding wrong output to finish the run.
 
 ## Domain patterns (pass these to the subagent too)
 

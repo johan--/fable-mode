@@ -7,7 +7,7 @@ description: >
   skeptical self-review before delivery. Trigger when the user explicitly asks
   for thorough/systematic/"deep work" handling AND wants it run on Sonnet ("fable
   on sonnet", "stage this on sonnet", "deep work mode, sonnet"). Use as the
-  balanced default between Haiku (cheap/fast) and Opus/Fable (peak reasoning).
+  balanced default between Haiku (cheap/fast) and Opus (peak reasoning).
   Do NOT use for ordinary single-pass tasks.
 ---
 
@@ -15,8 +15,8 @@ description: >
 
 Run the fable-mode discipline on Claude Sonnet via a subagent. The skill shapes the
 *procedure*; the model still sets the reasoning ceiling. Sonnet sits between Haiku and
-the frontier tier — strong general reasoning at lower cost. Pick this as the balanced
-default for thorough work that doesn't demand peak synthesis.
+Opus — strong general reasoning at lower cost. Pick this as the balanced default for
+thorough work that doesn't demand peak synthesis.
 
 Sonnet's characteristic gap: it plans decently but reliably skips step 3 — the check
 that can fail — and substitutes "looks right" review. The briefing below enforces step 3
@@ -35,6 +35,9 @@ do it directly. Staging a trivial task buries the answer under ceremony.
    The subagent does not inherit this session's skills, so the operational rules below
    are inlined in full — pass them verbatim, do not summarize them into a reference.
 4. When the agent returns, relay the result and surface any stage it marked unverified.
+5. For high-stakes deliverables, spawn a fresh verifier agent briefed only with the spec
+   and the artifact — not the worker's reasoning — and have it re-run the named checks
+   cold. A Haiku verifier is usually enough; the checks are mechanical by design.
 
 For independent sub-parts, spawn multiple Sonnet agents concurrently and merge outputs.
 Keep delegation one level deep: the agents you spawn run their stages sequentially and do
@@ -74,8 +77,7 @@ Read the final output as a skeptical reviewer. Hunt for a real weakness or limit
 one exists, fix it or flag it. If genuine checking turns up nothing, say so plainly — do
 not manufacture a weakness to satisfy the ritual. When a task is genuinely beyond Sonnet's
 capability, flag it rather than producing plausible-sounding wrong output — name what was
-attempted and where it failed, and recommend escalating to fable-mode on the frontier
-tier.
+attempted and where it failed, and recommend escalating to fable-opus.
 
 ## Domain patterns (pass these to the subagent too)
 

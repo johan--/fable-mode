@@ -8,10 +8,10 @@ description: >
   "deep work mode") OR when the task objectively spans multiple
   files, multiple sources, or multiple sessions. Do NOT trigger on ordinary
   multi-step requests that a direct attempt handles fine. For a run pinned to a
-  specific model, use fable-sonnet or fable-haiku instead. Operational
-  guardrails (verify-before-flag, warning batching, sed safety) live in the
-  companion execution-guardrails skill and apply on every model regardless of
-  whether this loop runs.
+  specific model, use fable-opus, fable-sonnet, or fable-haiku instead.
+  Operational guardrails (verify-before-flag, warning batching, sed safety)
+  live in the companion execution-guardrails skill and apply on every model
+  regardless of whether this loop runs.
 ---
 
 # Fable Mode
@@ -36,21 +36,26 @@ something.
 
 ## Calibrate to the model running it
 
-The loop's value inverts with model strength. Apply it at the right intensity:
+The loop's value inverts with model strength. When no Fable/Mythos-class model is
+available, Opus is the frontier tier and every escalation path below resolves to it.
+The escalation ladder is: Haiku → Sonnet → Opus → back to the user. Apply the loop at
+the right intensity:
 
-- **Frontier-tier models (Fable/Mythos class, latest Opus).** These plan, verify, and
-  self-correct natively. Do NOT narrate the loop or write a formal stage map for tasks
-  the model would handle cleanly anyway — that is ceremony. Apply only: (a) the failable-
-  check standard from step 3 when producing artifacts, and (b) everything in the
-  execution-guardrails skill. Write a full stage map only for genuinely multi-session or
-  many-file work.
+- **Frontier-tier models (latest Opus; Fable/Mythos class where available).** These
+  plan, verify, and self-correct natively. Do NOT narrate the loop or write a formal
+  stage map for tasks the model would handle cleanly anyway — that is ceremony. Apply
+  only: (a) the failable-check standard from step 3 when producing artifacts, and
+  (b) everything in the execution-guardrails skill. Write a full stage map only for
+  genuinely multi-session or many-file work. Opus's characteristic gaps: self-review
+  that trusts its own introspection, and scope growth mid-run — hold the external-
+  artifact standard and the replan budget even when the plan feels obviously right.
 - **Sonnet-tier.** Run the full loop. Sonnet plans decently but reliably skips step 3 —
   the check that can fail — and substitutes "looks right" review. Enforce step 3 hardest.
 - **Haiku-tier.** Run the full loop with tightened checks: every stage gets a failable
   check, no stage may be marked unverified without naming what check was impossible and
   why. Haiku under time pressure skips verification entirely; the loop exists to prevent
   exactly that. Accept that the ceiling is unchanged — Haiku with a checklist is still
-  Haiku. Escalate to a stronger model rather than looping when the task needs synthesis
+  Haiku. Escalate to Sonnet or Opus rather than looping when the task needs synthesis
   the checks can't substitute for.
 
 If the model cannot tell which tier it is, assume Sonnet-tier and run the full loop.
@@ -91,6 +96,12 @@ If subagent tooling is available and stage N and stage M don't depend on each ot
 spawn them concurrently. Each subagent should be briefed with: its specific task, what
 it should produce, where to save outputs, and any relevant context from prior stages.
 
+**Tier routing.** When the Agent tool exposes a `model` parameter, match the worker
+tier to the stage's difficulty, not to habit: Sonnet for stage work that needs real
+reasoning, Haiku for bulk mechanical work, the orchestrating model itself only for
+synthesis no cheaper tier can verifiably do. Routing down-tier cuts cost as well as
+time — expensive tokens should buy judgment, not file-shuffling.
+
 Good delegation: "research X while I do Y", "process these 3 files", "verify this
 independently". Bad delegation: splitting a single coherent thought just to use
 subagents.
@@ -122,6 +133,11 @@ weakness or limitation; if one exists, fix it or flag it to the user. If genuine
 turns up nothing, say so plainly — do not manufacture a weakness to satisfy the ritual.
 Step 3 is the check that can fail. Step 4 is the judgment call about what remains weak
 after the check passes.
+
+For high-stakes deliverables, and where the runtime supports subagents, spawn a fresh
+verifier agent briefed only with the spec and the artifact — not your reasoning — and
+have it run the checks cold. Fresh eyes cannot inherit your blind spots. A Haiku or
+Sonnet verifier is usually enough; the checks are mechanical by design.
 
 Verify-before-flag and warning batching rules for this step live in the
 execution-guardrails skill and are mandatory.
@@ -203,4 +219,6 @@ change raw capability.
 
 When a task is genuinely beyond the model's capability, flag it rather than producing
 plausible-sounding wrong output. That flag must itself follow verify-before-flag: name
-what was attempted and where it failed, not a vague appeal to difficulty.
+what was attempted and where it failed, not a vague appeal to difficulty. If a stronger
+tier exists on the ladder, recommend it; at the top of the ladder, the gap goes to the
+user.

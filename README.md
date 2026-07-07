@@ -30,11 +30,14 @@ trivial task wastes effort and buries the answer.
 
 ## Variants
 
-Three skills share the same core loop. Pick by how you want the work run:
+Four skills share the same core loop. Pick by how you want the work run:
 
 - `fable-mode` - the default. Runs the loop inline on the current model (Opus
   when that is the host). Use this unless you want the work pinned to a
   specific model.
+- `fable-opus` - spawns a subagent pinned to Claude Opus, with authority to route
+  independent sub-parts down to Sonnet/Haiku workers. The strongest staged run;
+  use for peak synthesis. Requires a runtime with the Agent tool.
 - `fable-sonnet` - spawns a subagent pinned to Claude Sonnet. The balanced
   choice: strong reasoning at lower cost than Opus. Requires a runtime with
   the Agent tool.
@@ -51,12 +54,13 @@ They do not raise the chosen model's reasoning ceiling.
 - `SKILL.md` - the skill itself
 - `EXAMPLE.md` - a worked before/after showing the verification check catching
   an error that a one-shot attempt ships
+- `fable-opus/SKILL.md` - the Opus variant
 - `fable-sonnet/SKILL.md` - the Sonnet variant
 - `fable-haiku/SKILL.md` - the Haiku variant
 
 ## Installation
 
-Place each skill directory (`fable-mode`, and optionally `fable-sonnet` /
+Place each skill directory (`fable-mode`, and optionally `fable-opus` / `fable-sonnet` /
 `fable-haiku`) wherever your Claude environment loads skills from (for example,
 a skills directory read by Claude Code), then invoke it by name or let it
 trigger on a qualifying task. Each variant's folder name must match the `name:`
